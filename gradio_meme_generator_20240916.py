@@ -12,10 +12,8 @@ from tenacity import retry, stop_after_attempt, wait_exponential
 import os
 import random
 
-firebase_credentials = st.secrets["firebase"]
-
 # Initialize Firebase (replace with your own credentials)
-cred = credentials.Certificate(firebase_credentials)
+cred = credentials.Certificate(st.secrets["firebase"])
 firebase_admin.initialize_app(cred)
 db = firestore.client()
 
