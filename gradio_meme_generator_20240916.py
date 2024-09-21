@@ -303,24 +303,14 @@ def main():
             location_labels.remove("Other (specify below)")
         location_labels.append("Other (specify below)")
         
-        # Initialize session state for selected location if not already set
-        if 'selected_location' not in st.session_state:
-            st.session_state.selected_location = location_labels[0]  # Select the first location
-
-        logger.debug(f"Current selected location in session state: {st.session_state.selected_location}")
-
-        # Create the selectbox
+        # Use a unique key for the selectbox
         selected_location = st.selectbox(
             "Select Location", 
             location_labels,
-            index=location_labels.index(st.session_state.selected_location),
             key='location_selectbox'
         )
         
-        # Update session state when a new location is selected
-        if selected_location != st.session_state.selected_location:
-            st.session_state.selected_location = selected_location
-            logger.debug(f"Updated selected location: {selected_location}")
+        logger.debug(f"Selected location: {selected_location}")
 
         # Only show the custom location input if "Other (specify below)" is selected
         if selected_location == "Other (specify below)":
