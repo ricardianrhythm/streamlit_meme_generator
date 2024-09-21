@@ -393,7 +393,7 @@ def main():
                     """
                     st.session_state.current_meme_html = meme_html
                     st.session_state.current_status = "New meme generated successfully."
-                st.experimental_rerun()
+                st.rerun()
 
         logger.debug("Fetching previous memes")
         st.subheader("Previous Memes")
