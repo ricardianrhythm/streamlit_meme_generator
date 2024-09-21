@@ -289,9 +289,29 @@ def main():
 
     # Fetch location labels from Firebase
     location_labels = get_locations_from_firebase()
-    initial_location = random.choice([label for label in location_labels if label != "Other (specify below)"])
+    
+    # Remove "Other (specify below)" for initial selection
+    initial_options = [label for label in location_labels if label != "Other (specify below)"]
+    
+    # Randomly select an initial location
+    initial_location = random.choice(initial_options)
+    
+    # Add "Other (specify below)" back to the options
+    location_labels = initial_options + ["Other (specify below)"]
 
-    selected_location = st.selectbox("Select Location", location_labels, index=location_labels.index(initial_location))
+    # Use session state to persist the selected location
+    if 'selected_location' not in st.session_state:
+        st.session_state.selected_location = initial_location
+
+    selected_location = st.selectbox(
+        "Select Location", 
+        location_labels, 
+        index=location_labels.index(st.session_state.selected_location),
+        key='location_selectbox'
+    )
+
+    # Update session state when a new location is selected
+    st.session_state.selected_location = selected_location
     
     # Only show the custom location input if "Other (specify below)" is selected
     if selected_location == "Other (specify below)":
@@ -313,6 +333,3 @@ def main():
     meme_gallery = get_memes_from_firebase()
     for meme_url, caption in meme_gallery:
         st.image(meme_url, caption=caption, use_column_width=True)
-
-if __name__ == "__main__":
-    main()
