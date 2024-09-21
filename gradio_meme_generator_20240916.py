@@ -211,23 +211,36 @@ def get_locations_from_firebase():
         st.error(f"Error fetching locations from Firebase: {str(e)}")
         return ["Other (specify below)"]
 
-def create_meme(selected_location, custom_location, thought):
+def create_meme(location, thought):
     if not thought.strip():
         return "Please enter your thought.", None, get_memes_from_firebase()
 
     used_thought = thought.strip()
-    used_label = custom_location.strip() if selected_location == "Other (specify below)" else selected_location
+    used_label = location.strip()
 
-    if selected_location == "Other (specify below)" and not custom_location.strip():
+    if location == "Other (specify below)":
         return "Please enter a custom location.", None, get_memes_from_firebase()
 
-    # Add new location to Firebase if it's a custom location
-    if selected_location == "Other (specify below)":
+
+def create_meme(location, thought):
+    if not thought.strip():
+        return "Please enter your thought.", None, get_memes_from_firebase()
+
+    used_thought = thought.strip()
+    used_label = location.strip()
+
+    if not used_label:
+        return "Please enter a location.", None, get_memes_from_firebase()
+
+    # Add new location to Firebase if it's not already in the list
+    existing_locations = get_locations_from_firebase()
+    if used_label not in existing_locations:
         try:
             db.collection('locations').add({
                 'label': used_label,
                 'ip_address': ""
             })
+            st.success(f"Added new location: {used_label}")
         except Exception as e:
             st.error(f"Error adding new location to Firebase: {str(e)}")
 
@@ -279,12 +292,19 @@ def main():
     initial_location = random.choice([label for label in location_labels if label != "Other (specify below)"])
 
     selected_location = st.selectbox("Select Location", location_labels, index=location_labels.index(initial_location))
-    custom_location = st.text_input("Enter custom location", visible=(selected_location == "Other (specify below)"))
+    
+    # Only show the custom location input if "Other (specify below)" is selected
+    if selected_location == "Other (specify below)":
+        custom_location = st.text_input("Enter custom location")
+    else:
+        custom_location = ""
 
     thought = st.text_input("Enter your thought")
     
     if st.button("Generate Meme"):
-        status, meme_html, meme_gallery = create_meme(selected_location, custom_location, thought)
+        # Use custom_location if "Other (specify below)" is selected, otherwise use selected_location
+        location = custom_location if selected_location == "Other (specify below)" else selected_location
+        status, meme_html, meme_gallery = create_meme(location, thought)
         st.write(status)
         if meme_html:
             st.markdown(meme_html, unsafe_allow_html=True)
