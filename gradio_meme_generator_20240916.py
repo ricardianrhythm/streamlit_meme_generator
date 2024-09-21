@@ -39,7 +39,6 @@ import traceback
 import time
 from tenacity import retry, stop_after_attempt, wait_exponential
 import os
-import random
 
 # Set up API keys using Streamlit secrets
 IMGFLIP_USERNAME = st.secrets["IMGFLIP_USERNAME"]
@@ -305,7 +304,7 @@ def main():
         
         # Initialize session state for selected location if not already set
         if 'selected_location' not in st.session_state:
-            st.session_state.selected_location = random.choice(location_labels[:-1])  # Exclude "Other (specify below)"
+            st.session_state.selected_location = location_labels[0]  # Select the first location
 
         logger.debug(f"Current selected location in session state: {st.session_state.selected_location}")
 
