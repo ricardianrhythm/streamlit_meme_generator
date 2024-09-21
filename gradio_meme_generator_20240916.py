@@ -1,11 +1,25 @@
 import streamlit as st
 import firebase_admin
 from firebase_admin import credentials, firestore
+import json
 
 # Check if the Firebase app has already been initialized
 if not firebase_admin._apps:
+    # Extract Firebase credentials from Streamlit secrets
+    firebase_credentials = {
+        key: st.secrets["firebase"][key]
+        for key in [
+            "type", "project_id", "private_key_id", "private_key",
+            "client_email", "client_id", "auth_uri", "token_uri",
+            "auth_provider_x509_cert_url", "client_x509_cert_url",
+            "universe_domain"
+        ]
+    }
+    
+    # Ensure private_key is properly formatted
+    firebase_credentials["private_key"] = firebase_credentials["private_key"].replace("\\n", "\n")
+
     # Initialize Firebase
-    firebase_credentials = st.secrets["firebase"]
     cred = credentials.Certificate(firebase_credentials)
     firebase_admin.initialize_app(cred)
 
