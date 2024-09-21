@@ -368,24 +368,16 @@ def main():
             location = custom_location if selected_location == "Other (specify below)" else selected_location
             logger.debug(f"Location for meme generation: {location}")
             
-            # Generate the meme
-            meme_url, meme_id, doc_id, error = generate_meme(thought, location, excluded_memes=st.session_state.excluded_memes)
+            # Use create_meme function to handle new location saving and meme generation
+            status, meme_html, meme_gallery = create_meme(location, thought)
             
-            if error:
-                st.write(error)
-            else:
+            if "successfully" in status:
                 st.session_state.meme_generated = True
-                st.session_state.current_meme_id = meme_id
-                meme_html = f"""
-                <div style='text-align: center;'>
-                    <img src='{meme_url}' alt='Meme' style='max-width: 100%; height: auto;'/>
-                    <p style='font-size: 1.2em; font-weight: bold;'>{thought}</p>
-                    <p style='font-size: 1em;'>Location: {location}</p>
-                </div>
-                """
                 st.session_state.current_meme_html = meme_html
-                st.session_state.current_status = "Meme generated successfully."
+                st.session_state.current_status = status
                 st.session_state.current_location = location
+            else:
+                st.write(status)
 
         if st.session_state.meme_generated:
             st.write(st.session_state.current_status)
@@ -395,22 +387,14 @@ def main():
             if st.button("Try again, different meme"):
                 logger.debug("Try again button clicked")
                 st.session_state.excluded_memes.append(st.session_state.current_meme_id)
-                meme_url, meme_id, doc_id, error = generate_meme(thought, st.session_state.current_location, excluded_memes=st.session_state.excluded_memes)
+                status, meme_html, meme_gallery = create_meme(st.session_state.current_location, thought)
                 
-                if error:
-                    st.write(error)
-                else:
-                    st.session_state.current_meme_id = meme_id
-                    meme_html = f"""
-                    <div style='text-align: center;'>
-                        <img src='{meme_url}' alt='Meme' style='max-width: 100%; height: auto;'/>
-                        <p style='font-size: 1.2em; font-weight: bold;'>{thought}</p>
-                        <p style='font-size: 1em;'>Location: {st.session_state.current_location}</p>
-                    </div>
-                    """
+                if "successfully" in status:
                     st.session_state.current_meme_html = meme_html
                     st.session_state.current_status = "New meme generated successfully."
-                st.rerun()
+                    st.rerun()
+                else:
+                    st.write(status)
 
         logger.debug("Fetching previous memes")
         st.subheader("Previous Memes")
