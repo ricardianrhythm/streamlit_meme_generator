@@ -1,8 +1,19 @@
 import streamlit as st
-import requests
-import json
 import firebase_admin
 from firebase_admin import credentials, firestore
+
+# Check if the Firebase app has already been initialized
+if not firebase_admin._apps:
+    # Initialize Firebase
+    firebase_credentials = st.secrets["firebase"]
+    cred = credentials.Certificate(firebase_credentials)
+    firebase_admin.initialize_app(cred)
+
+db = firestore.client()
+
+# Now, add all your other imports
+import requests
+import json
 import openai
 from requests.exceptions import HTTPError
 import traceback
@@ -11,12 +22,6 @@ import time
 from tenacity import retry, stop_after_attempt, wait_exponential
 import os
 import random
-
-# Initialize Firebase
-firebase_credentials = st.secrets["firebase"]
-cred = credentials.Certificate(firebase_credentials)
-firebase_admin.initialize_app(cred)
-db = firestore.client()
 
 # Set up API keys using Streamlit secrets
 IMGFLIP_USERNAME = st.secrets["IMGFLIP_USERNAME"]
