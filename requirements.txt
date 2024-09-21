@@ -1,4 +1,5 @@
-streamlit==1.23.1  # Ensure to match the Streamlit version you're using.
-firebase-admin==6.1.0  # Replace with a compatible version.
-openai==0.27.0  # Replace with a compatible version.
-gradio==3.40.1  # Replace with a compatible version.
+streamlit
+firebase-admin
+requests
+openai
+tenacity
