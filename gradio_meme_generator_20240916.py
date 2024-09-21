@@ -67,6 +67,23 @@ def call_openai_api(data):
 
 def collect_user_ip():
     try:
+        # Try Streamlit's experimental function
+        user_ip = st.experimental_get_query_params().get('streamlit_ip', ['unknown'])[0]
+        if user_ip != 'unknown':
+            return user_ip
+
+        # Check common proxy headers
+        headers_to_check = [
+            'HTTP_X_FORWARDED_FOR',
+            'HTTP_X_REAL_IP',
+            'REMOTE_ADDR'
+        ]
+        for header in headers_to_check:
+            ip = st._get_browser_address_bar_data().get(header)
+            if ip:
+                return ip.split(',')[0].strip()
+
+        # If all else fails, use the server's IP (which will be consistent for your app)
         response = requests.get('https://api.ipify.org?format=json')
         return response.json()['ip']
     except:
