@@ -1,7 +1,12 @@
 import streamlit as st
+import logging
 import firebase_admin
 from firebase_admin import credentials, firestore
 import json
+
+# Set up logging
+logging.basicConfig(level=logging.DEBUG)
+logger = logging.getLogger(__name__)
 
 # Check if the Firebase app has already been initialized
 if not firebase_admin._apps:
@@ -285,51 +290,71 @@ def create_meme(location, thought):
     return "Meme generated successfully.", meme_html, get_memes_from_firebase()
 
 def main():
-    st.title("Big Red Button Meme Generator")
+    try:
+        logger.debug("Starting main function")
+        
+        st.title("Big Red Button Meme Generator")
+        
+        logger.debug("Fetching locations from Firebase")
+        location_labels = get_locations_from_firebase()
+        logger.debug(f"Fetched locations: {location_labels}")
+        
+        # Remove "Other (specify below)" for initial selection
+        initial_options = [label for label in location_labels if label != "Other (specify below)"]
+        
+        # Randomly select an initial location
+        initial_location = random.choice(initial_options)
+        logger.debug(f"Initial location: {initial_location}")
+        
+        # Add "Other (specify below)" back to the options
+        location_labels = initial_options + ["Other (specify below)"]
 
-    # Fetch location labels from Firebase
-    location_labels = get_locations_from_firebase()
-    
-    # Remove "Other (specify below)" for initial selection
-    initial_options = [label for label in location_labels if label != "Other (specify below)"]
-    
-    # Randomly select an initial location
-    initial_location = random.choice(initial_options)
-    
-    # Add "Other (specify below)" back to the options
-    location_labels = initial_options + ["Other (specify below)"]
+        # Use session state to persist the selected location
+        if 'selected_location' not in st.session_state:
+            st.session_state.selected_location = initial_location
 
-    # Use session state to persist the selected location
-    if 'selected_location' not in st.session_state:
-        st.session_state.selected_location = initial_location
+        selected_location = st.selectbox(
+            "Select Location", 
+            location_labels, 
+            index=location_labels.index(st.session_state.selected_location),
+            key='location_selectbox'
+        )
+        logger.debug(f"Selected location: {selected_location}")
 
-    selected_location = st.selectbox(
-        "Select Location", 
-        location_labels, 
-        index=location_labels.index(st.session_state.selected_location),
-        key='location_selectbox'
-    )
+        # Update session state when a new location is selected
+        st.session_state.selected_location = selected_location
+        
+        # Only show the custom location input if "Other (specify below)" is selected
+        if selected_location == "Other (specify below)":
+            custom_location = st.text_input("Enter custom location")
+            logger.debug(f"Custom location entered: {custom_location}")
+        else:
+            custom_location = ""
 
-    # Update session state when a new location is selected
-    st.session_state.selected_location = selected_location
-    
-    # Only show the custom location input if "Other (specify below)" is selected
-    if selected_location == "Other (specify below)":
-        custom_location = st.text_input("Enter custom location")
-    else:
-        custom_location = ""
+        thought = st.text_input("Enter your thought")
+        logger.debug(f"Thought entered: {thought}")
+        
+        if st.button("Generate Meme"):
+            logger.debug("Generate Meme button clicked")
+            # Use custom_location if "Other (specify below)" is selected, otherwise use selected_location
+            location = custom_location if selected_location == "Other (specify below)" else selected_location
+            logger.debug(f"Location for meme generation: {location}")
+            status, meme_html, meme_gallery = create_meme(location, thought)
+            st.write(status)
+            if meme_html:
+                st.markdown(meme_html, unsafe_allow_html=True)
 
-    thought = st.text_input("Enter your thought")
-    
-    if st.button("Generate Meme"):
-        # Use custom_location if "Other (specify below)" is selected, otherwise use selected_location
-        location = custom_location if selected_location == "Other (specify below)" else selected_location
-        status, meme_html, meme_gallery = create_meme(location, thought)
-        st.write(status)
-        if meme_html:
-            st.markdown(meme_html, unsafe_allow_html=True)
+        logger.debug("Fetching previous memes")
+        st.subheader("Previous Memes")
+        meme_gallery = get_memes_from_firebase()
+        for meme_url, caption in meme_gallery:
+            st.image(meme_url, caption=caption, use_column_width=True)
+        
+        logger.debug("Main function completed successfully")
 
-    st.subheader("Previous Memes")
-    meme_gallery = get_memes_from_firebase()
-    for meme_url, caption in meme_gallery:
-        st.image(meme_url, caption=caption, use_column_width=True)
+    except Exception as e:
+        logger.error(f"An error occurred in the main function: {str(e)}")
+        st.error(f"An error occurred: {str(e)}")
+
+if __name__ == "__main__":
+    main()
