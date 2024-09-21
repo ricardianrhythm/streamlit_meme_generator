@@ -39,7 +39,6 @@ import traceback
 import time
 from tenacity import retry, stop_after_attempt, wait_exponential
 import os
-import random
 
 # Set up API keys using Streamlit secrets
 IMGFLIP_USERNAME = st.secrets["IMGFLIP_USERNAME"]
@@ -207,9 +206,8 @@ def get_memes_from_firebase():
 
 def get_locations_from_firebase():
     try:
-        locations = db.collection('locations').get()
+        locations = db.collection('locations').order_by('label').get()
         location_labels = [location.to_dict().get('label', 'Unknown Location') for location in locations]
-        random.shuffle(location_labels)
         return location_labels + ["Other (specify below)"]
     except Exception as e:
         st.error(f"Error fetching locations from Firebase: {str(e)}")
