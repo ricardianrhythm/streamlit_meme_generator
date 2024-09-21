@@ -36,7 +36,6 @@ import json
 import openai
 from requests.exceptions import HTTPError
 import traceback
-import logging
 import time
 from tenacity import retry, stop_after_attempt, wait_exponential
 import os
@@ -299,31 +298,30 @@ def main():
         location_labels = get_locations_from_firebase()
         logger.debug(f"Fetched locations: {location_labels}")
         
-        # Remove "Other (specify below)" for initial selection
-        initial_options = [label for label in location_labels if label != "Other (specify below)"]
+        # Ensure "Other (specify below)" is always the last option
+        if "Other (specify below)" in location_labels:
+            location_labels.remove("Other (specify below)")
+        location_labels.append("Other (specify below)")
         
-        # Randomly select an initial location
-        initial_location = random.choice(initial_options)
-        logger.debug(f"Initial location: {initial_location}")
-        
-        # Add "Other (specify below)" back to the options
-        location_labels = initial_options + ["Other (specify below)"]
-
-        # Use session state to persist the selected location
+        # Initialize session state for selected location if not already set
         if 'selected_location' not in st.session_state:
-            st.session_state.selected_location = initial_location
+            st.session_state.selected_location = random.choice(location_labels[:-1])  # Exclude "Other (specify below)"
 
+        logger.debug(f"Current selected location in session state: {st.session_state.selected_location}")
+
+        # Create the selectbox
         selected_location = st.selectbox(
             "Select Location", 
-            location_labels, 
+            location_labels,
             index=location_labels.index(st.session_state.selected_location),
             key='location_selectbox'
         )
-        logger.debug(f"Selected location: {selected_location}")
-
-        # Update session state when a new location is selected
-        st.session_state.selected_location = selected_location
         
+        # Update session state when a new location is selected
+        if selected_location != st.session_state.selected_location:
+            st.session_state.selected_location = selected_location
+            logger.debug(f"Updated selected location: {selected_location}")
+
         # Only show the custom location input if "Other (specify below)" is selected
         if selected_location == "Other (specify below)":
             custom_location = st.text_input("Enter custom location")
